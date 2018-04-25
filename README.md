@@ -1,4 +1,4 @@
-## [centrifuge-patric - Radcot Part One - YOU ARE HERE](https://github.com/scottdaniel/centrifuge-patric)
+## [centrifuge-patric - Radcot Part One - YOU ARE HERE](https://github.com/hurwitzlab/centrifuge-patric)
 - Identify bacterial species from a metagenomic sample
 - Download genomes of said species
 
