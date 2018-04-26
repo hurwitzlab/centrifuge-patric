@@ -82,7 +82,7 @@ function HELP() {
 #
 [[ $# -eq 0 ]] && HELP
 
-while getopts :a:d:i:f:m:o:q:r:s:m:x:k:1:2h OPT; do
+while getopts :a:d:i:f:m:o:q:r:s:m:x:k:1:2:h OPT; do
     case $OPT in
         a)
             FASTX="$OPTARG"
