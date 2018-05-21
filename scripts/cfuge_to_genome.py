@@ -31,10 +31,11 @@ if __name__ == "__main__":
             help="Minimum abundance needed to download a species\' genome", \
             default='.01', type=float)
     parser.add_argument("-a", "--annotation_type", \
-            default="both", choices=['refseq','patric','both'], \
-            description="Which type of annotation to get: refseq, patric, or both. " \
-            "NOTE: Choosing \"refseq\" will discard genomes that only have PATRIC annotaion" \
-            "Default is \"both\"")
+            default="refseq", choices=['refseq','patric'], \
+            help="Which type of annotation to get: refseq or patric. " \
+            "NOTE: Choosing \"refseq\" will discard genomes that only have PATRIC annotaion. " \
+            "NOTE2: patric annotations will generally include refseq genes. " \
+            "Default is \"refseq\" as it is generally better curated.")
         
     args = parser.parse_args()
 
@@ -84,46 +85,54 @@ def download_genomes(filtered_list):
                     continue
 
             break
-                
-                
 
         for patricID in list_of_patricIDs:
             if patricID != '' and patricID != 'genome.genome_id':
-                print('Getting PATRIC genome_id {}'.format(patricID))
+                if args.annotation_type == 'refseq':
+                    print('Getting PATRIC genome_id {}'.format(patricID))
 
-                try:
-                    print('Getting the genome nucleotide sequence ".fna"')
-                    wget('ftp://ftp.patricbrc.org/genomes/' + patricID + '/' + patricID + '.fna')
-                except Exception as e:
-                    print("Something went wrong with downloading the .fna. Error {}".format(e))
-                    
-                try:
-                    print('Getting the genome RefSeq annotation ".gff"')
-                    wget('ftp://ftp.patricbrc.org/genomes/' + patricID + '/' + \
-                        patricID + '.RefSeq.gff')
-                except Exception as e:
-                    print("Something went wrong with downloading the .Refseq.gff Error {}".format(e))
-                
-                #if the RefSeq.gff does not exist or it is too small (usually just means its just a header and nothing else) we get the PATRIC.gff
-
-                if not os.path.isfile(patricID + '.RefSeq.gff'):
                     try:
-                        print('Since there was no RefSeq.gff, trying to get PATRIC.gff for you')
+                        print('Getting the genome nucleotide sequence ".fna"')
+                        wget('ftp://ftp.patricbrc.org/genomes/' + patricID + '/' + patricID + '.fna')
+                    except Exception as e:
+                        print("Something went wrong with downloading the .fna. Error {}".format(e))
+                        
+                    try:
+                        print('Getting the genome RefSeq annotation ".gff"')
+                        wget('ftp://ftp.patricbrc.org/genomes/' + patricID + '/' + \
+                            patricID + '.RefSeq.gff')
+                    except Exception as e:
+                        print("Something went wrong with downloading the .Refseq.gff Error {}".format(e))
+
+                    #check to make sure its not a bogus refseq.gff
+                    line_count = int(wc('-l', patricID + '.RefSeq.gff').strip().split()[0])
+                    if line_count < 5:
+                        print('The RefSeq.gff is less than 5 lines, it is probably bogus.')
+                        os.remove(patricID + '.RefSeq.gff')
+                        os.remove(patricID + '.fna' )
+
+                elif args.annotation_type == 'patric':
+                    print('Getting PATRIC genome_id {}'.format(patricID))
+
+                    try:
+                        print('Getting the genome nucleotide sequence ".fna"')
+                        wget('ftp://ftp.patricbrc.org/genomes/' + patricID + '/' + patricID + '.fna')
+                    except Exception as e:
+                        print("Something went wrong with downloading the .fna. Error {}".format(e))
+                     
+                    try:
+                        print('Getting the PATRIC.gff for you')
                         wget('ftp://ftp.patricbrc.org/genomes/' + patricID + '/' + \
                         patricID + '.PATRIC.gff')
                     except Exception as e:
                         print("Something went wrong with downloading the .PATRIC.gff Error {}".format(e))
-                else:
-                    line_count = int(wc('-l', patricID + '.RefSeq.gff').strip().split()[0])
-                    if line_count < 5:
-                        try:
-                            print('The RefSeq.gff is less than 5 lines, it is probably bogus. Trying to get PATRIC.gff for you')
-                            wget('ftp://ftp.patricbrc.org/genomes/' + patricID + '/' + \
-                            patricID + '.PATRIC.gff')
-                            os.remove(patricID + '.RefSeq.gff')
-                        except Exception as e:
-                            print("Something went wrong with downloading the .PATRIC.gff Error {}".format(e))
 
+                else:
+                    print("The annotation type {} does not compute".format(args.annotation_type))
+                    sys.exit(1)
+
+                print("Getting the pathway annotation file \"*.PATRIC.pathway.tab\"")
+                    
 def get_reports(report_file_or_dir):
     
     if os.path.isfile(args.report):
