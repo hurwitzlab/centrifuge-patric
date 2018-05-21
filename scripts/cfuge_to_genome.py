@@ -30,6 +30,11 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--min_abundance", action="store", \
             help="Minimum abundance needed to download a species\' genome", \
             default='.01', type=float)
+    parser.add_argument("-a", "--annotation_type", \
+            default="both", choices=['refseq','patric','both'], \
+            description="Which type of annotation to get: refseq, patric, or both. " \
+            "NOTE: Choosing \"refseq\" will discard genomes that only have PATRIC annotaion" \
+            "Default is \"both\"")
         
     args = parser.parse_args()
 
