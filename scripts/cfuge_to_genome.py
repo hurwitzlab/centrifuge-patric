@@ -98,17 +98,17 @@ def download_genomes(filtered_list):
                         print("Something went wrong with downloading the .fna. Error {}".format(e))
                         
                     try:
-                        print('Getting the genome RefSeq annotation ".gff"')
+                        print('Getting all the RefSeq annotation for {}'.format(patricID))
                         wget('ftp://ftp.patricbrc.org/genomes/' + patricID + '/' + \
-                            patricID + '.RefSeq.gff')
+                            patricID + '.RefSeq*')
                     except Exception as e:
-                        print("Something went wrong with downloading the .Refseq.gff Error {}".format(e))
+                        print("Something went wrong with downloading the Refseq annotation Error {}".format(e))
 
                     #check to make sure its not a bogus refseq.gff
                     line_count = int(wc('-l', patricID + '.RefSeq.gff').strip().split()[0])
                     if line_count < 5:
                         print('The RefSeq.gff is less than 5 lines, it is probably bogus.')
-                        os.remove(patricID + '.RefSeq.gff')
+                        os.remove(patricID + 'RefSeq*')
                         os.remove(patricID + '.fna' )
 
                 elif args.annotation_type == 'patric':
@@ -121,17 +121,15 @@ def download_genomes(filtered_list):
                         print("Something went wrong with downloading the .fna. Error {}".format(e))
                      
                     try:
-                        print('Getting the PATRIC.gff for you')
+                        print('Getting all the PATRIC annotation for {}'.format(patricID))
                         wget('ftp://ftp.patricbrc.org/genomes/' + patricID + '/' + \
-                        patricID + '.PATRIC.gff')
+                        patricID + '.PATRIC*')
                     except Exception as e:
-                        print("Something went wrong with downloading the .PATRIC.gff Error {}".format(e))
+                        print("Something went wrong with downloading the PATRIC annotation Error {}".format(e))
 
                 else:
                     print("The annotation type {} does not compute".format(args.annotation_type))
                     sys.exit(1)
-
-                print("Getting the pathway annotation file \"*.PATRIC.pathway.tab\"")
                     
 def get_reports(report_file_or_dir):
     
