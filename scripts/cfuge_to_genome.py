@@ -108,7 +108,7 @@ def download_genomes(filtered_list):
                     line_count = int(wc('-l', patricID + '.RefSeq.gff').strip().split()[0])
                     if line_count < 5:
                         print('The RefSeq.gff is less than 5 lines, it is probably bogus.')
-                        os.remove(patricID + 'RefSeq*')
+                        os.remove(patricID + '.RefSeq*')
                         os.remove(patricID + '.fna' )
 
                 elif args.annotation_type == 'patric':
