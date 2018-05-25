@@ -2,6 +2,7 @@
 '''
 Script that takes a centrifuge report and download genomes and annotations
 '''
+import glob
 import time
 import sys
 import argparse
@@ -105,11 +106,16 @@ def download_genomes(filtered_list):
                         print("Something went wrong with downloading the Refseq annotation Error {}".format(e))
 
                     #check to make sure its not a bogus refseq.gff
-                    line_count = int(wc('-l', patricID + '.RefSeq.gff').strip().split()[0])
-                    if line_count < 5:
-                        print('The RefSeq.gff is less than 5 lines, it is probably bogus.')
-                        os.remove(patricID + '.RefSeq*')
-                        os.remove(patricID + '.fna' )
+                    if os.path.isfile(patricID + '.RefSeq.gff'):
+                        line_count = int(wc('-l', patricID + '.RefSeq.gff').strip().split()[0])
+                        if line_count < 5:
+                            print('The RefSeq.gff is less than 5 lines, it is probably bogus.')
+                            [os.remove(x) for x in glob.glob(patricID + '*')]
+    #                        os.remove(patricID + '.RefSeq*')
+    #                        os.remove(patricID + '.fna' )
+                    else:
+                        print('There was no RefSeq.gff for genome_id {}, therfore deleting the genome'.format(patricID))
+                        [os.remove(x) for x in glob.glob(patricID + '*')]
 
                 elif args.annotation_type == 'patric':
                     print('Getting PATRIC genome_id {}'.format(patricID))
