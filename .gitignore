@@ -102,3 +102,4 @@ ENV/
 *.img
 *.out
 *.param
+.DS_Store
