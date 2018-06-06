@@ -37,6 +37,7 @@ SKIP_EXISTING=1
 PARAMRUN="${MY_PARAMRUN:-$TACC_LAUNCHER_DIR/paramrun}"
 MIN_ABUNDANCE=0.01
 FORMAT="fasta"
+THREADS=1
 
 #
 # Some needed functions
@@ -73,6 +74,7 @@ function HELP() {
     echo " -k SKIP_EXISTING ($SKIP_EXISTING)"
     echo " -m MIN_ABUNDANCE ($MIN_ABUNDANCE)"
     echo " -x EXCLUDE_TAXIDS"
+    echo " -t THREADS ($THREADS)"
     echo ""
     exit 0
 }
@@ -82,7 +84,7 @@ function HELP() {
 #
 [[ $# -eq 0 ]] && HELP
 
-while getopts :a:d:i:f:m:o:q:r:s:m:x:k:1:2:h OPT; do
+while getopts :a:d:i:f:m:o:q:r:s:m:x:k:1:2:t:h OPT; do
     case $OPT in
         a)
             FASTX="$OPTARG"
@@ -125,6 +127,9 @@ while getopts :a:d:i:f:m:o:q:r:s:m:x:k:1:2:h OPT; do
             ;;
         x)
             EXCLUDE_TAXIDS="$OPTARG"
+            ;;
+        t)
+            THREADS="$OPTARG"
             ;;
         :)
             echo "Error: Option -$OPTARG requires an argument."
