@@ -22,3 +22,6 @@ shell:
 
 scp:
 	scp $(IMG_NAME) stampede2:/work/03859/sdaniel/stampede2/centrifuge-patric-0.0.5/stampede/
+
+scpua:
+	scp $(IMG_NAME) ua-sftp:/rsgrps/bhurwitz/scottdaniel/singularity-images
