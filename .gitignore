@@ -103,3 +103,4 @@ ENV/
 *.out
 *.param
 .DS_Store
+*.swp
