@@ -70,3 +70,7 @@ MirrorURL: http://us.archive.ubuntu.com/ubuntu/
     mkdir /extra 
     mkdir /xdisk 
     mkdir /rsgrps
+    mkdir -p /cm/shared
+
+    # Mount point for local vagrant testing
+    mkdir /vagrant
