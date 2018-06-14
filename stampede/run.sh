@@ -84,7 +84,7 @@ function HELP() {
 #
 [[ $# -eq 0 ]] && HELP
 
-while getopts :a:d:i:f:m:o:q:r:s:m:x:k:1:2:t:h OPT; do
+while getopts :a:d:i:f:m:o:q:r:s:m:x:k1:2:t:h OPT; do
     case $OPT in
         a)
             FASTX="$OPTARG"
@@ -186,6 +186,8 @@ if [[ ! -f "$PARAMRUN" ]]; then
     exit 1
 fi
 
+echo -e "Whether to skip existing centrifuge reports is $SKIP_EXISTING\n"
+echo -e "1 for True and 0 for False\n"
 #
 # Create, null-out command file for running Centrifuge
 #
@@ -194,7 +196,7 @@ cat /dev/null > "$CENT_PARAM"
 
 EXCLUDE_ARG=""
 [[ -n "$EXCLUDE_TAXIDS" ]] && EXCLUDE_ARG="--exclude-taxids $EXCLUDE_TAXIDS"
-RUN_CENTRIFUGE="CENTRIFUGE_INDEXES=$INDEX_DIR singularity run $CENTRIFUGE_IMG $EXCLUDE_ARG"
+RUN_CENTRIFUGE="CENTRIFUGE_INDEXES=$INDEX_DIR singularity run $CENTRIFUGE_IMG -t $THREADS $EXCLUDE_ARG"
 
 #
 # Set up LAUNCHER env
