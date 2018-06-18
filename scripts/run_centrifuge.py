@@ -24,7 +24,7 @@ def get_args():
                         nargs='+',
                         default='')
 
-    parser.add_argument('-t', '--format',
+    parser.add_argument('-f', '--format',
                         help='Input file format',
                         metavar='str',
                         type=str,
@@ -40,7 +40,7 @@ def get_args():
                         help='Centrifuge index directory',
                         metavar='str',
                         type=str,
-                        default='')
+                        default='/work/05066/imicrobe/iplantc.org/data/centrifuge-indexes')
 
     parser.add_argument('-o', '--out_dir',
                         help='Output directory',
