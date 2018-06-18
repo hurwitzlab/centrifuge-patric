@@ -82,10 +82,16 @@ def get_args():
                         default=1000000)
 
     parser.add_argument('-t', '--threads',
-                        help='Num of threads',
+                        help='Num of threads per instance of centrifuge',
                         metavar='int',
                         type=int,
-                        default=4)
+                        default=1)
+
+    parser.add_argument('-P', '--procs',
+                        help='Max number of processes to run',
+                        metavar='int',
+                        type=int,
+                        default=1)
 
     return parser.parse_args()
 
@@ -125,20 +131,21 @@ def line_count(fname):
     return n
 
 # --------------------------------------------------
-def run_job_file(jobfile, msg='Running job'):
+def run_job_file(jobfile, msg='Running job', procs=1):
     """Run a job file if there are jobs"""
     num_jobs = line_count(jobfile)
     warn('{} (# jobs = {})'.format(msg, num_jobs))
 
     if num_jobs > 0:
-        subprocess.run('parallel < ' + jobfile, shell=True)
+        print('parallel -P {} < '.format(procs) + jobfile)
+        subprocess.run('parallel -P {} < '.format(procs) + jobfile, shell=True)
 
     os.remove(jobfile)
 
     return True
 
 # --------------------------------------------------
-def split_files(out_dir, files, max_seqs, file_format):
+def split_files(out_dir, files, max_seqs, file_format, procs):
     """Split input files by max_sequences"""
     split_dir = os.path.join(out_dir, 'split')
 
@@ -151,7 +158,7 @@ def split_files(out_dir, files, max_seqs, file_format):
 
     for input_file in files:
         out_file = os.path.join(split_dir, os.path.basename(input_file))
-        if not os.path.isfile(out_file):
+        if not os.path.isdir(out_file):
             jobfile.write(tmpl.format(bin_dir,
                                       input_file,
                                       file_format,
@@ -161,14 +168,14 @@ def split_files(out_dir, files, max_seqs, file_format):
 
     jobfile.close()
 
-    if not run_job_file(jobfile=jobfile.name, msg='Splitting input files'):
+    if not run_job_file(jobfile=jobfile.name, msg='Splitting input files', procs=procs):
         die()
 
     return list(filter(os.path.isfile,
                        glob.iglob(split_dir + '/**', recursive=True)))
 
 # --------------------------------------------------
-def run_centrifuge(files, exclude_ids, index_name, index_dir, out_dir, threads):
+def run_centrifuge(files, exclude_ids, index_name, index_dir, out_dir, threads, procs):
     """Run Centrifuge"""
     reports_dir = os.path.join(out_dir, 'reports')
 
@@ -193,7 +200,7 @@ def run_centrifuge(files, exclude_ids, index_name, index_dir, out_dir, threads):
                                       tsv_file))
     jobfile.close()
 
-    if not run_job_file(jobfile=jobfile.name, msg='Running Centrifuge'):
+    if not run_job_file(jobfile=jobfile.name, msg='Running Centrifuge', procs=procs):
         die()
 
     return list(filter(os.path.isfile,
@@ -365,14 +372,16 @@ def main():
         split_file_names = split_files(out_dir=out_dir,
                                        files=input_files,
                                        file_format=args.format,
-                                       max_seqs=args.max_seqs_per_file)
+                                       max_seqs=args.max_seqs_per_file,
+                                       procs=args.procs)
 
         reports = run_centrifuge(files=split_file_names,
                                  out_dir=out_dir,
                                  exclude_ids=exclude_ids,
                                  index_dir=index_dir,
                                  index_name=index_name,
-                                 threads=args.threads)
+                                 threads=args.threads,
+                                 procs=args.procs)
 
         collapse_dir = collapse_reports(input_files=input_files,
                                         reports=reports,
