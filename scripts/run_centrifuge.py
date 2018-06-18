@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 import tempfile as tmp
+from pprint import pprint
 
 # --------------------------------------------------
 def get_args():
@@ -22,6 +23,26 @@ def get_args():
                         metavar='str',
                         type=str,
                         nargs='+',
+                        default='')
+
+    parser.add_argument('-1', '--forward',
+                        help='Comma-separated forward reads\n'
+                        'that pair with reverse reads',
+                        metavar='str',
+                        type=str,
+                        default='')
+
+    parser.add_argument('-2', '--reverse',
+                        help='Comma-separated reverse reads\n'
+                        'that pair with forward reads',
+                        metavar='str',
+                        type=str,
+                        default='')
+
+    parser.add_argument('-U', '--unpaired',
+                        help='Comma-separated unpaired reads',
+                        metavar='str',
+                        type=str,
                         default='')
 
     parser.add_argument('-f', '--format',
@@ -60,7 +81,7 @@ def get_args():
                         type=int,
                         default=1000000)
 
-    parser.add_argument('-T', '--threads',
+    parser.add_argument('-t', '--threads',
                         help='Num of threads',
                         metavar='int',
                         type=int,
@@ -91,7 +112,7 @@ def find_input_files(query):
         elif os.path.isfile(qry):
             files.append(qry)
         else:
-            warn('--query "{}" neither file nor directory'.format(qry))
+            die('--query "{}" neither file nor directory'.format(qry))
     return files
 
 # --------------------------------------------------
@@ -126,7 +147,7 @@ def split_files(out_dir, files, max_seqs, file_format):
 
     jobfile = tmp.NamedTemporaryFile(delete=False, mode='wt')
     bin_dir = os.path.dirname(os.path.realpath(__file__))
-    tmpl = '{}/fasplit.py -i {} -f {} -o {} -n {}\n'
+    tmpl = '{}/fxsplit.py -i {} -f {} -o {} -n {}\n'
 
     for input_file in files:
         out_file = os.path.join(split_dir, os.path.basename(input_file))
@@ -318,7 +339,7 @@ def main():
         print('--index_name is required')
         sys.exit(1)
 
-    valid_index = set(['nt', 'p_compressed', 'p_compressed+h+v', 'p+h+v'])
+    valid_index = set(['p_compressed', 'p_compressed+h+v', 'p+h+v']) #since this is getting genomes from PATRIC db of bacteria, we do not want nt
     if not index_name in valid_index:
         tmpl = '--index "{}" is not valid, please choose from: {}'
         die(tmpl.format(index_name, ', '.join(sorted(valid_index))))
@@ -331,36 +352,47 @@ def main():
 
     exclude_ids = get_excluded_tax(args.exclude_taxids)
 
-    input_files = find_input_files(args.query)
+    if args.query:
+        input_files = find_input_files(args.query)
+        
+        num_files = len(input_files)
+        warn('Found {} input file{}'.format(num_files,
+                                            '' if num_files == 1 else 's'))
 
-    num_files = len(input_files)
-    warn('Found {} input file{}'.format(num_files,
-                                        '' if num_files == 1 else 's'))
+        if num_files == 0:
+            die('No usable files from --query')
 
-    if num_files == 0:
-        die('No usable files from --query')
+        split_file_names = split_files(out_dir=out_dir,
+                                       files=input_files,
+                                       file_format=args.format,
+                                       max_seqs=args.max_seqs_per_file)
 
-    split_file_names = split_files(out_dir=out_dir,
-                                   files=input_files,
-                                   file_format=args.format,
-                                   max_seqs=args.max_seqs_per_file)
+        reports = run_centrifuge(files=split_file_names,
+                                 out_dir=out_dir,
+                                 exclude_ids=exclude_ids,
+                                 index_dir=index_dir,
+                                 index_name=index_name,
+                                 threads=args.threads)
 
-    reports = run_centrifuge(files=split_file_names,
-                             out_dir=out_dir,
-                             exclude_ids=exclude_ids,
-                             index_dir=index_dir,
-                             index_name=index_name,
-                             threads=args.threads)
+        collapse_dir = collapse_reports(input_files=input_files,
+                                        reports=reports,
+                                        out_dir=out_dir)
 
-    collapse_dir = collapse_reports(input_files=input_files,
-                                    reports=reports,
-                                    out_dir=out_dir)
+        fig_dir = make_bubble(collapse_dir=collapse_dir, out_dir=out_dir)
 
-    fig_dir = make_bubble(collapse_dir=collapse_dir, out_dir=out_dir)
+        print('Done, reports in "{}", figures in "{}"'.format(collapse_dir,
+                                                              fig_dir))
+    elif args.forward and args.reverse:
+        #TODO: stuff for running centrifuge with forward and reverse reads
+        input_files = args.forward
+    else:
+        die('Need a query or paired forward and reverse reads\n' +
+                'This is what is have: query {}\n'.format(args.query) +
+                'forward {}\n'.format(args.forward) +
+                'reverse {}\n'.format(args.reverse) +
+                'unpaired {}\n'.format(args.unpaired))
 
-    print('Done, reports in "{}", figures in "{}"'.format(collapse_dir,
-                                                          fig_dir))
-
+        
 # --------------------------------------------------
 if __name__ == '__main__':
     main()
