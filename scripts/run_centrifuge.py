@@ -175,7 +175,8 @@ def split_files(out_dir, files, max_seqs, file_format, procs):
                        glob.iglob(split_dir + '/**', recursive=True)))
 
 # --------------------------------------------------
-def run_centrifuge(files, exclude_ids, index_name, index_dir, out_dir, threads, procs):
+def run_centrifuge(file_format, files, exclude_ids, 
+        index_name, index_dir, out_dir, threads, procs):
     """Run Centrifuge"""
     reports_dir = os.path.join(out_dir, 'reports')
 
@@ -184,7 +185,12 @@ def run_centrifuge(files, exclude_ids, index_name, index_dir, out_dir, threads, 
 
     jobfile = tmp.NamedTemporaryFile(delete=False, mode='wt')
     exclude_arg = '--exclude-taxids ' + exclude_ids if exclude_ids else ''
-    tmpl = 'CENTRIFUGE_INDEXES={} centrifuge {} -f -p {} -x {} -U {} -S {} --report-file {}\n'
+    if file_format == 'fasta':
+        tmpl = 'CENTRIFUGE_INDEXES={} centrifuge {} -f -p {} -x {} -U {} -S {} --report-file {}\n'
+    elif file_format == 'fastq':
+        tmpl = 'CENTRIFUGE_INDEXES={} centrifuge {} -p {} -x {} -U {} -S {} --report-file {}\n'
+    else:
+        die('Need to specifiy read format for centrifuge to work')
 
     for file in files:
         basename = os.path.basename(file)
@@ -375,7 +381,8 @@ def main():
                                        max_seqs=args.max_seqs_per_file,
                                        procs=args.procs)
 
-        reports = run_centrifuge(files=split_file_names,
+        reports = run_centrifuge(file_format=args.format,
+                                 files=split_file_names,
                                  out_dir=out_dir,
                                  exclude_ids=exclude_ids,
                                  index_dir=index_dir,
