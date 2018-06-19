@@ -475,7 +475,7 @@ def main():
                                  procs=args.procs)
 
         reports_dir = os.path.dirname(reports[0])
-
+        warn('Reports dir: {}'.format(reports_dir))
         fig_dir = make_bubble(collapse_dir=reports_dir, out_dir=out_dir)
 
         print('Done, reports in "{}", figures in "{}"'.format(reports_dir,
