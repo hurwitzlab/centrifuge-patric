@@ -13,6 +13,6 @@ test_paired:
 		-2 $(HOME)/in/DNA_1_CGATGT_L002_R2_001.fastq,$(HOME)/in/DNA_1_CGATGT_L002_R2_002.fastq,$(HOME)/in/DNA_1_CGATGT_L002_R2_003.fastq,$(HOME)/in/DNA_2_TGACCA_L002_R2_001.fastq,$(HOME)/in/DNA_2_TGACCA_L002_R2_002.fastq,$(HOME)/in/DNA_2_TGACCA_L002_R2_003.fastq,$(HOME)/in/DNA_3_ACAGTG_L002_R2_001.fastq,$(HOME)/in/DNA_3_ACAGTG_L002_R2_002.fastq,$(HOME)/in/DNA_3_ACAGTG_L002_R2_003.fastq,$(HOME)/in/DNA_4_GCCAAT_L002_R2_001.fastq,$(HOME)/in/DNA_4_GCCAAT_L002_R2_002.fastq,$(HOME)/in/DNA_4_GCCAAT_L002_R2_003.fastq \
 		-I $(INDEX_DIR) -i p_compressed+h+v -f fastq \
 		-o $(HOME)/centrifuge-out \
-		-X 10000 -t 4 -P 4
+		-x 9606 -t 4 -P 4
 
 
