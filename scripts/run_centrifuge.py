@@ -212,6 +212,45 @@ def run_centrifuge(file_format, files, exclude_ids,
     return list(filter(os.path.isfile,
                        glob.iglob(reports_dir + '/**', recursive=True)))
 
+def run_centrifuge(file_format, files, exclude_ids, 
+        index_name, index_dir, out_dir, threads, procs):
+    """Run Centrifuge"""
+    reports_dir = os.path.join(out_dir, 'reports')
+
+    if not os.path.isdir(reports_dir):
+        os.makedirs(reports_dir)
+
+    jobfile = tmp.NamedTemporaryFile(delete=False, mode='wt')
+    exclude_arg = '--exclude-taxids ' + exclude_ids if exclude_ids else ''
+    if file_format == 'fasta':
+        tmpl = 'CENTRIFUGE_INDEXES={} centrifuge {} -f -p {} -x {} -1 {} -2 {} -S {} --report-file {}\n'
+    elif file_format == 'fastq':
+        tmpl = 'CENTRIFUGE_INDEXES={} centrifuge {} -p {} -x {} -1 {} -2 {} -S {} --report-file {}\n'
+    else:
+        die('Need to specifiy read format for centrifuge to work')
+
+    for f, r in files:
+        basename = os.path.basename(f)
+        tsv_file = os.path.join(reports_dir, basename + '.tsv')
+        sum_file = os.path.join(reports_dir, basename + '.sum')
+        if not os.path.isfile(tsv_file):
+            jobfile.write(tmpl.format(index_dir,
+                                      exclude_arg,
+                                      threads,
+                                      index_name,
+                                      f,
+                                      r,
+                                      sum_file,
+                                      tsv_file))
+    jobfile.close()
+
+    if not run_job_file(jobfile=jobfile.name, msg='Running Centrifuge', procs=procs):
+        die()
+
+    return list(filter(os.path.isfile,
+                       glob.iglob(reports_dir + '/**', recursive=True)))
+
+
 # --------------------------------------------------
 def get_excluded_tax(ids):
     """Verify the ids look like numbers"""
@@ -365,8 +404,14 @@ def main():
 
     exclude_ids = get_excluded_tax(args.exclude_taxids)
 
-    if args.query:
-        input_files = find_input_files(args.query)
+    if args.query or args.unpaired:
+        if args.query and not args.unpaired:
+            input_files = find_input_files(args.query)
+        elif args.unpaired and not args.query:
+            input_files = args.unpaired.split(',')
+        else:
+            die('Using query input AND unpaired is unsupported\n' +
+                    'Please choose one or the other')
         
         num_files = len(input_files)
         warn('Found {} input file{}'.format(num_files,
@@ -399,8 +444,45 @@ def main():
         print('Done, reports in "{}", figures in "{}"'.format(collapse_dir,
                                                               fig_dir))
     elif args.forward and args.reverse:
-        #TODO: stuff for running centrifuge with forward and reverse reads
-        input_files = args.forward
+
+        f_list = args.forward.split(',')
+        r_list = args.reverse.split(',')
+
+        if len(f_list) != len(r_list):
+            die('Number of forward reads is not the same as reverse reads!!')
+
+        num_files = len(f_list)
+
+        warn('Found {} paired read{}'.format(num_files,
+                                            '' if num_files == 1 else 's'))
+
+        if num_files == 0:
+            die('No usable files from -1/-2')
+
+        paired = [] #list of tuples (forward_read,reverse_read)
+        for read in f_list:
+            paired.append((read, r_list[f_list.index(read)]))
+
+        #NOTE: reports get named after the forward reads so that also has to be the input
+        #for "collapsing"
+        reports = run_cent_paired(file_format=args.format,
+                                 paired_reads=paired,
+                                 out_dir=out_dir,
+                                 exclude_ids=exclude_ids,
+                                 index_dir=index_dir,
+                                 index_name=index_name,
+                                 threads=args.threads,
+                                 procs=args.procs)
+
+        collapse_dir = collapse_reports(input_files=f_list,
+                                        reports=reports,
+                                        out_dir=out_dir)
+
+        fig_dir = make_bubble(collapse_dir=collapse_dir, out_dir=out_dir)
+
+        print('Done, reports in "{}", figures in "{}"'.format(collapse_dir,
+                                                              fig_dir))
+
     else:
         die('Need a query or paired forward and reverse reads\n' +
                 'This is what is have: query {}\n'.format(args.query) +
