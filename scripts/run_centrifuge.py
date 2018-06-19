@@ -474,13 +474,11 @@ def main():
                                  threads=args.threads,
                                  procs=args.procs)
 
-        collapse_dir = collapse_reports(input_files=f_list,
-                                        reports=reports,
-                                        out_dir=out_dir)
+        reports_dir = os.path.dirname(reports[0])
 
-        fig_dir = make_bubble(collapse_dir=collapse_dir, out_dir=out_dir)
+        fig_dir = make_bubble(collapse_dir=reports_dir, out_dir=out_dir)
 
-        print('Done, reports in "{}", figures in "{}"'.format(collapse_dir,
+        print('Done, reports in "{}", figures in "{}"'.format(reports_dir,
                                                               fig_dir))
 
     else:
