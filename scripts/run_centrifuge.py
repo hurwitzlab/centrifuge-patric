@@ -212,7 +212,7 @@ def run_centrifuge(file_format, files, exclude_ids,
     return list(filter(os.path.isfile,
                        glob.iglob(reports_dir + '/**', recursive=True)))
 
-def run_centrifuge(file_format, files, exclude_ids, 
+def run_cent_paired(file_format, paired_reads, exclude_ids, 
         index_name, index_dir, out_dir, threads, procs):
     """Run Centrifuge"""
     reports_dir = os.path.join(out_dir, 'reports')
@@ -229,7 +229,7 @@ def run_centrifuge(file_format, files, exclude_ids,
     else:
         die('Need to specifiy read format for centrifuge to work')
 
-    for f, r in files:
+    for f, r in paired_reads:
         basename = os.path.basename(f)
         tsv_file = os.path.join(reports_dir, basename + '.tsv')
         sum_file = os.path.join(reports_dir, basename + '.sum')
